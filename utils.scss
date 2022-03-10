@@ -1,0 +1,64 @@
+// found on https://gist.github.com/Jakobud/ec056b52f3673cc369dc97f2c2428424
+@function list-remove($list, $index) {
+    $newList: ();
+
+    @for $i from 1 through length($list) {
+        @if $i != $index {
+            $newList: append($newList, nth($list,$i), 'space');
+        }
+    }
+
+    @return $newList;
+}
+
+// found on https://gist.github.com/Jakobud/744b98b629abe018766f6d506a2e92ae
+@function list-sort($list) {
+    $sortedlist: ();
+
+    @while length($list) > 0 {
+        $value: nth($list,1);
+
+        @each $item in $list {
+            @if $item < $value {
+                $value: $item;
+            }
+        }
+
+        $sortedlist: append($sortedlist, $value, 'space');
+        $list: list-remove($list, index($list, $value));
+    }
+
+    @return $sortedlist;
+}
+
+// found on https://github.com/pentzzsolt/sass-recursive-map-merge
+@function fn__map-deep-merge($parent-map, $child-map) {
+    $result: $parent-map;
+
+    @each $key, $value in $child-map {
+        @if (not map-has-key($result, $key)) or (type-of(map-get($result, $key)) != type-of($value)) or (not (type-of(map-get($result, $key)) == map and type-of($value) == map)) {
+            $result: map-merge($result, ($key: $value));
+        }
+        @else {
+            $result: map-merge($result, ($key: fn__map-deep-merge(map-get($result, $key), $value)));
+        }
+    }
+
+    @return $result;
+}
+
+@function fn__get-widths($args) {
+    $widths: ();
+
+    @each $property, $prop-values-map in $args {
+        @each $width, $prop-value in $prop-values-map {
+            $is-width-in-widths: index($widths, $width);
+
+            @if (not $is-width-in-widths) {
+                $widths: append($widths, $width);
+            }
+        }
+    }
+
+    @return $widths;
+}
