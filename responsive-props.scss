@@ -1,0 +1,146 @@
+@import "./const.scss";
+
+
+$min-desktop-width-px: $min-desktop-width + px;
+
+
+@function resize_to_vw($media, $value) {
+    $full_width: 100vw;
+    $result: calc(calc($full_width * $value) / $media);
+    @return $result;
+}
+
+
+@function resize_to_px($source_media, $dest_media, $source_value) {
+    $result: calc(calc($source_value * $dest_media) / $source_media);
+    @return $result;
+}
+
+/*
+    Миксин для написания стилей в vw для мобильной версии по одному макету для какого-то разрешения.
+
+    Можно использовать только с числовыми свойствами
+    Если нужно задать нечисловые свойства, то нужно использовать @mixin mobile-props
+
+    По дефолту значения в vw вычисляются до ширины 414px, далее значения фиксируются в px
+
+
+    Пример использования:
+
+    .some-class {
+        @include responsive-mobile-props(
+            375px, // ширина вьюпорта в макете
+            // числовые css-свойства
+            (
+                width: 200px,
+                font-size: 14px,
+            )
+        );
+    }
+
+    ===>
+
+    @media (min-width: 0px) and (max-width: calc(1024px - 1px)) {
+        .some-class {
+            width: 53.3333333333vw;
+        }
+    }
+    @media (min-width: 424px) and (max-width: calc(1024px - 1px)) {
+        .some-class {
+            width: 226.1333333333px;
+        }
+    }
+    @media (min-width: 0px) and (max-width: calc(1024px - 1px)) {
+        .some-class {
+            font-size: 3.7333333333vw;
+        }
+    }
+    @media (min-width: 424px) and (max-width: calc(1024px - 1px)) {
+        .some-class {
+            font-size: 15.8293333333px;
+        }
+    }
+*/
+@mixin responsive-mobile-props($layout-width, $args-map) {
+    $min-width: 0px;
+    $static-max-width: 424px;
+
+    @each $prop, $value in $args-map {
+        @media (min-width: $min-width) and (max-width: calc($min-desktop-width-px - 1px)) {
+            #{$prop}: resize_to_vw($layout-width, $value);
+        }
+
+        @media (min-width: $static-max-width) and (max-width: calc($min-desktop-width-px - 1px)) {
+            #{$prop}: resize_to_px($layout-width, $static-max-width, $value);
+        }
+    }
+
+    @media (min-width: $min-width) and (max-width: calc($min-desktop-width-px - 1px)) {
+        @content;
+    }
+}
+
+
+/*
+    Миксин для написания стилей в vw для десктопной версии по одному макету для какого-то разрешения.
+
+    Можно использовать только с числовыми свойствами
+    Если нужно задать нечисловые свойства, то нужно использовать @mixin desktop-props
+
+    По дефолту значения в vw вычисляются до ширины 1920px, далее значения фиксируются в px
+
+
+    Пример использования:
+
+    .some-class {
+        @include responsive-desktop-props(
+            1720px, // ширина вьюпорта в макете
+            // числовые css-свойства
+            (
+                width: 200px,
+                font-size: 14px,
+            )
+        );
+    }
+
+    ===>
+
+    @media (min-width: 1024px) and (max-width: 1919px) {
+        .some-class {
+            width: 11.6279069767vw;
+        }
+    }
+    @media (min-width: 1920px) {
+        .some-class {
+            width: 223.2558139535px;
+        }
+    }
+    @media (min-width: 1024px) and (max-width: 1919px) {
+        .some-class {
+            font-size: 0.8139534884vw;
+        }
+    }
+    @media (min-width: 1920px) {
+        .some-class {
+            font-size: 15.6279069767px;
+        }
+    }
+*/
+
+@mixin responsive-desktop-props($layout-width, $args-map) {
+    $max-width: 1920px;
+
+    @each $prop, $value in $args-map {
+        @media (min-width: $min-desktop-width-px) and (max-width: calc($max-width - 1px)) {
+            #{$prop}: resize_to_vw($layout-width, $value);
+        }
+
+        @media (min-width: $max-width) {
+            #{$prop}: resize_to_px($layout-width, $max-width, $value);
+        }
+    }
+
+    @media (min-width: $min-desktop-width-px) {
+        @content;
+    }
+}

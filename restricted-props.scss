@@ -1,0 +1,261 @@
+@import './utils.scss';
+@import './const.scss';
+
+/*
+fn__get-widths-with-prop(
+    width,
+    (
+        320: XX,
+        360: YY,
+        414: ZZ,
+    ),
+);
+===>
+(
+    320: (width: XX),
+    360: (width: YY),
+    414: (width: ZZ),
+)
+*/
+@function fn__get-widths-with-prop($prop, $values-map) {
+    $widths: map-keys($values-map);
+    $result-map: ();
+
+    @each $width in $widths {
+        $value: map-get($values-map, $width);
+        $width-map: ($width: ($prop: $value));
+
+        $result-map: map-merge($result-map, $width-map);
+    }
+
+    @return $result-map;
+}
+
+@function fn__define-media-type($arg) {
+    @if ($arg == $mobile) {
+        @return $mobile;
+    }
+    @if ($arg == $desktop) {
+        @return $desktop;
+    }
+    @if ($arg == $all) {
+        @return $all;
+    }
+    @if ($arg < $min-desktop-width) {
+        @return $mobile;
+    }
+    @if ($arg >= $min-desktop-width) {
+        @return $desktop;
+    }
+
+    @return null;
+}
+
+
+/*
+Миксина для быстрой и удобной генерации одного медиа-квери.
+Общий вариант использования:
+```
+.classname {
+    @include media(...) { scss }
+    @include media(...) { scss }
+}
+```
+Особые варианты:
+media(mobile) - медиа-запрос только для мобилки (0-959). Граница определена в переменной '$max-mobile-width'.
+media(desktop) - медиа-запрос только для десктопа (960+). Граница определена в переменной '$min-desktop-width'.
+media(all) - медиа-запрос (0+).
+media(350) - ограниченный медиа-запрос для мобилки (320-959).
+media(1300) - ограниченный медиа-запрос для десктопа (1300+).
+media(300, 600) - ограниченный медиа-запрос (300-600).
+*/
+@mixin media($low-limit, $top-limit: null) {
+    @if ($low-limit == $mobile) {
+        @media screen and (max-width: #{$min-desktop-width - 1}px) {
+            @content;
+        }
+    }
+    @else if ($low-limit == $desktop) {
+        @media screen and (min-width: #{$min-desktop-width}px) {
+            @content;
+        }
+    }
+    @else if ($low-limit == $all) {
+        @media screen {
+            @content;
+        }
+    }
+
+    @else if ($top-limit and $low-limit) {
+        @media screen and (min-width: #{$low-limit}px) and (max-width: #{$top-limit}px) {
+            @content;
+        }
+    }
+    @else if ($low-limit and (not $top-limit)) {
+        $media-type: fn__define-media-type($low-limit);
+
+        @if ($media-type == $mobile) {
+            @media screen and (min-width: #{$low-limit}px) and (max-width: #{$min-desktop-width - 1}px) {
+                @content;
+            }
+        }
+        @if ($media-type == $desktop) {
+            @media screen and (min-width: #{$low-limit}px) {
+                @content;
+            }
+        }
+    }
+}
+
+/*
+props-by-width(
+    320,
+    (
+        width: XX,
+        height: YY,
+        color: ZZ,
+    ),
+)
+=>
+@media screen and (max-width: 959px) {
+    width: XX,
+    height: YY,
+    color: ZZ,
+}
+*/
+@mixin props-by-width($width, $props-map) {
+    @include media($width) {
+        @each $prop, $value in $props-map {
+            #{$prop}: $value;
+        }
+    }
+}
+
+
+/*
+Миксина для быстрой и удобной генерации набора изменяющихся медиа-квери.
+Общий вариант использования:
+```
+.classname {
+    @include props-by-widths((
+        width: (
+            320: XX,
+            360: YY,
+        height: (
+            320: ZZ,
+            360: HH,
+        )
+    ));
+};
+===>
+@media screen and (min-width: 320px) and (max-width: 959px) {
+    .classname {
+        width: XX,
+        height: ZZ,
+    }
+}
+@media screen and (min-width: 360px) and (max-width: 959px) {
+    .classname {
+        width: YY,
+        height: HH,
+    }
+}
+```
+Особенности:
+- логичный синтаксис на основе маповю Двоеточие после значения свойства обязательно, наличие двойных
+  открывающих/закрывающих скобок для аргументов обязательно (требование к синтаксису мапа в scss):
+  @include props-by-widths((prop1: (320: red, 360: blue), prop2: (320: red, 360: blue)));
+- границы идут от указанной в аргументах миксины до:
+  - максимальной границы мобильных разрешений (для мобилки - 959px) или
+  - без верхней границы (для десктопа);
+- параметры для определения границ определены в миксине 'media';
+- нельзя задать верхнюю границу медиа-зароса.
+- возможно использовать любые, но только ЧИСЛОВЫЕ значения для указания разрешений для значений свойств.
+  Это связано с сортировкой для корректной работы каскада стилей;
+*/
+@mixin props-by-widths($args-map) {
+    $all-props-map: ();
+
+    @each $prop, $values-map in $args-map {
+        $prop-map: fn__get-widths-with-prop($prop, $values-map);
+        $all-props-map: fn__map-deep-merge($all-props-map, $prop-map);
+    }
+
+    $widths: map-keys($all-props-map);
+    $sorted-widths: list-sort($widths);
+
+    @each $width in $sorted-widths {
+        $props-map: map-get($all-props-map, $width);
+
+        @include props-by-width($width, $props-map)
+    }
+}
+
+/*
+Миксина для быстрой и удобной генерации набора любых видов свойств.
+Общий вариант использования:
+```
+restricted-props(320, 400, (
+    font-size: WW,
+    color: QQ,
+
+    width: (
+        320: XX,
+        360: YY,
+    height: (
+        320: ZZ,
+        360: HH,
+));
+===>
+@media screen and (min-width: 320px) and (max-width: 400px) {
+    font-size: WW,
+    color: QQ,
+}
+@media screen and (min-width: 320px) and (max-width: 959px) {
+    width: YY,
+    height: HH,
+}
+@media screen and (min-width: 360px) and (max-width: 959px) {
+    width: YY,
+    height: HH,
+}
+```
+Особенности:
+- простой и плоский синтаксис на основе мапов. Наличие открывающих/закрывающих скобок для аргументов обязательно
+  (требование к синтаксису мапа в scss);
+- границы для свойств действуют от минимальной до максимальной для всех свойств. Даже если, например, при '$min-width == 320' задать
+  'height: (320: 30px, 1024: 60px)', то '1024: 60px' не будет применяться. Но, если такой вариант необходим,
+  то можно использовать вызов миксины restricted-props(all);
+  Верхняя граница отсутствует, если минимальная больше минимальной десктопной ширины или ($min-width == all);
+- при дублировании одного и того же свойства произойдет ошибка, что поможет понять, что свойство переопределяется;
+- параметры для определения границ определены в миксине 'media';
+- возможно использовать любые, но только ЧИСЛОВЫЕ значения для указания разрешений.
+  Это связано с сортировкой для корректной работы каскада стилей;
+*/
+@mixin restricted-props($min-width, $max-width, $args-map) {
+    $media-type: fn__define-media-type($min-width);
+
+    $low-limit: $min-width or $media-type;
+    $top-limit: $max-width or null;
+
+    @include media($low-limit, $top-limit) {
+        @each $prop, $args in $args-map {
+            @if (type-of($args) != map) {
+                #{$prop}: #{$args};
+            }
+            @else {
+                @include props-by-widths(($prop: $args));
+            }
+        }
+    }
+}
+
+@mixin mobile-props($args-map) {
+    @include restricted-props($mobile, null, $args-map);
+}
+@mixin desktop-props($args-map) {
+    @include restricted-props($desktop, null, $args-map);
+}
+@mixin all-props($args-map) {
+    @include restricted-props($all, null, $args-map);
+}
