@@ -249,3 +249,13 @@ restricted-props(320, 400, (
         }
     }
 }
+
+@mixin mobile-props($args-map) {
+    @include restricted-props($mobile, null, $args-map);
+}
+@mixin desktop-props($args-map) {
+    @include restricted-props($desktop, null, $args-map);
+}
+@mixin all-props($args-map) {
+    @include restricted-props($all, null, $args-map);
+}
