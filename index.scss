@@ -9,33 +9,6 @@ $all: 'all';
 
 
 /*
-fn__get-widths(
-    width: (
-        320: XX,
-        360: XX,
-        414: XX,
-    ),
-);
-===>
-(320 360 414)
-*/
-@function fn__get-widths($args-map) {
-    $widths: ();
-
-    @each $prop, $values-map in $args-map {
-        @each $width, $value in $values-map {
-            $is-width-in-widths: index($widths, $width);
-
-            @if (not $is-width-in-widths) {
-                $widths: append($widths, $width);
-            }
-        }
-    }
-
-    @return $widths;
-}
-
-/*
 fn__get-widths-with-prop(
     width,
     (
@@ -162,54 +135,6 @@ props-by-width(
         @each $prop, $value in $props-map {
             #{$prop}: $value;
         }
-    }
-}
-
-/*
-DEPRECATED: не самый логичный синтаксис. Следует использовать 'props-by-widths'.
-Миксина для быстрой и удобной генерации набора медиа-квери.
-Общий вариант использования:
-```
-.classname {
-    @include props-by-media(
-        prop1 (
-            320: red,
-            360: blue,
-        ),
-        prop2 (
-            1024: 80px,
-        ),
-    );
-}
-```
-Особенности:
-- синтаксис: допускаются переносы строк в аргументах, запятая/двоеточие после свойства ('prop1') не нужна:
-  @include props-by-media(prop1 (320: red, 360: blue), prop2 (320: red, 360: blue));
-- границы идут от указанной в аргументах миксины до:
-  - максимальной границы мобильных разрешений (для мобилки - 959px) или
-  - без верхней границы (для десктопа);
-- параметры для определения границ определены в миксине 'media';
-- нельзя задать верхнюю границу медиа-зароса.
-- возможно использовать любые, но только ЧИСЛОВЫЕ значения для указания разрешений для значений свойств.
-  Это связано с сортировкой для корректной работы каскада стилей;
-
-DEPRECATED: не самый логичный синтаксис. Следует использовать 'props-by-widths'.
-*/
-@mixin props-by-media($args...) {
-    $all-props-map: ();
-
-    @each $prop, $params-map in $args {
-        $prop-map: fn__get-widths-with-prop($prop, $params-map);
-        $all-props-map: fn__map-deep-merge($all-props-map, $prop-map);
-    }
-
-    $widths: map-keys($all-props-map);
-    $sorted-widths: list-sort($widths);
-
-    @each $width in $sorted-widths {
-        $props-map: map-get($all-props-map, $width);
-
-        @include props-by-width($width, $props-map)
     }
 }
 
