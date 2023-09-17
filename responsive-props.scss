@@ -1,0 +1,54 @@
+@import "./const.scss";
+
+
+@function resize_to_vw($media, $value) {
+    $full_width: 100vw;
+    $result: calc(calc($full_width * $value) / $media);
+    @return $result;
+}
+
+
+@function resize_to_px($source_media, $dest_media, $source_value) {
+    $result: calc(calc($source_value * $dest_media) / $source_media);
+    @return $result;
+}
+
+
+@mixin responsive-mobile-props($layout-width, $args-map) {
+    $min-width: 0px;
+    $static-max-width: 424px;
+
+    @each $prop, $value in $args-map {
+        @media (min-width: $min-width) and (max-width: calc($min-desktop-width - 1px)) {
+            #{$prop}: resize_to_vw($layout-width, $value);
+        }
+
+        @media (min-width: $static-max-width) and (max-width: calc($min-desktop-width - 1px)) {
+            #{$prop}: resize_to_px($layout-width, $static-max-width, $value);
+        }
+    }
+
+    @media (min-width: $min-width) and (max-width: calc($min-desktop-width - 1px)) {
+        @content;
+    }
+}
+
+
+@mixin responsive-desktop-props($layout-width, $args-map) {
+    $max-width: 1920px;
+
+    @each $prop, $value in $args-map {
+        @media (min-width: $min-desktop-width) and (max-width: calc($max-width - 1px)) {
+            #{$prop}: resize_to_vw($layout-width, $value);
+        }
+
+        @media (min-width: $max-width) {
+            #{$prop}: resize_to_px($layout-width, $max-width, $value);
+        }
+    }
+
+    @media (min-width: $min-desktop-width) {
+        @content;
+    }
+}
+
