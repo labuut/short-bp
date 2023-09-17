@@ -5,21 +5,22 @@ Sass helper to write sass code with big amount of breakpoints fast
 # recommendations on the use
 
 В short-bp появились новые миксины, которые помогут легко и просто описывать даже большие селекторы для многих разрешений в плоском стиле, основанном на объектах (мапах):
-```
+
+```scss
 mobile-props(mobile-props($args-map);
 desktop-props(mobile-props($args-map);
 all-props(mobile-props($args-map);
 ```
 Все они внутри просто вызывают миксину restricted-props с различными параметрами, но это не так важно.
 
-##Общий принцип описания селекторов:
+## Общий принцип описания селекторов:
 ```scss
 .className {
     @include mobile-props((
         // статичные свойства
         font-size: 12px,
         color: red,
-        
+
         // изменяющиеся свойства
         width: (
             360: 16px,
@@ -31,7 +32,7 @@ all-props(mobile-props($args-map);
         ),
     ));
     @include desktop-props((
-        font-size: 22px,  
+        font-size: 22px,
         width: (
             1024: 16px,
             1366: 14px,
@@ -44,7 +45,7 @@ all-props(mobile-props($args-map);
 }
 ```
 
-##Основные пункты: 
+## Основные пункты:
 не определять стили просто внутри селектора, а обязательно задавать их область действия через миксины mobile/desktop/all-props;
 
 использовать all-props в редких случаях: на страницах лендингов, для срочной верстки и для описания стилей, явно относящихся ко всем разрешениям (например для задания параметров анимаций);
@@ -60,7 +61,7 @@ all-props(mobile-props($args-map);
         ),
     ));
     @include desktop-props((
-        font-size: 22px,  
+        font-size: 22px,
         width: (
             1024: 16px,
             1366: 14px,
@@ -72,7 +73,7 @@ all-props(mobile-props($args-map);
 }
 ```
 
-##Границы действия:
+## Границы действия:
 При использовании этих миксин можно больше не бояться, что мобильные стили при изменении изменят десткопные или наоборот, т.к. при определении стилей таким образом они действуют только на те разрешения (mobile/desktop/all-props), для которых заданы (главное, правильно определить max/min-ширины для мобильных/десктопных разрешений в файле cool-media-queries.scss):
 ```scss
 .className {
@@ -85,7 +86,7 @@ all-props(mobile-props($args-map);
 }
 ```
 
-##Вложенные селекторы:
+## Вложенные селекторы:
 В миксинах mobile/desktop/all-props нельзя определять вложенные  селекторы/псевдоэлементы/псевдоклассы. В этом случае их нужно выносить на уровень основного селектора и также использовать mobile/desktop/all-props внутри вложенного элемента:
 ```scss
 .className {
@@ -95,7 +96,7 @@ all-props(mobile-props($args-map);
             400: 14px,
         ),
     ));
-  
+
     // вложенный селектор
     &:last-child {
         @include mobile-props((
